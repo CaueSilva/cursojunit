@@ -57,7 +57,7 @@ public class BookServiceTest {
 	}
 
 	private Book createNewBook() {
-		return new Book((long)123,"Aventuras","Fulano","123456");
+		return new Book(123l,"Aventuras","Fulano","123456");
 	}
 	
 }

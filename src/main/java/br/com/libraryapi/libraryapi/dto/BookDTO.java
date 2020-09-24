@@ -17,7 +17,6 @@ public class BookDTO {
 	}
 	
 	public BookDTO(Long id, String title, String author, String isbn) {
-		super();
 		this.id = id;
 		this.title = title;
 		this.author = author;

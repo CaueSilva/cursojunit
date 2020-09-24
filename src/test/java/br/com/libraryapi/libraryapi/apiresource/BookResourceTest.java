@@ -3,6 +3,8 @@ package br.com.libraryapi.libraryapi.apiresource;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Optional;
+
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ import br.com.libraryapi.libraryapi.services.impl.BookServiceImpl;
 @ActiveProfiles("test") //Profile ativo (application.properties)
 @WebMvcTest //Configura um objeto para receber as requisições
 @AutoConfigureMockMvc 
-public class BookControllerTest {
+public class BookResourceTest {
 	
 	private static final String BOOK_API = "/api/books";
 	
@@ -101,9 +103,69 @@ public class BookControllerTest {
 			.andExpect(jsonPath("errors",Matchers.hasSize(1)))
 			.andExpect(jsonPath("errors[0]").value(mensagem));
 	}
+	
+	@Test
+	@DisplayName("Deve recuperar os detalhes de um livro específico")
+	public void mustRecoverTheDetailsOfABook() throws Exception {
+		Long id = 1l;
+		Book book = new Book(id,"Meu livro","Autor","123456");
+		BDDMockito.given(service.getById(id)).willReturn(Optional.of(book));
+		
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.get(BOOK_API.concat("/"+id))
+				.accept(MediaType.APPLICATION_JSON);
+		
+		mvc.perform(request)
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("id").value(id))
+			.andExpect(jsonPath("title").value(book.getTitle()))
+			.andExpect(jsonPath("author").value(book.getAuthor()))
+			.andExpect(jsonPath("isbn").value(book.getIsbn()));
+	}
+	
+	@Test
+	@DisplayName("Deve retornar NOT FOUND quando o livro procurado não existir")
+	public void bookNotFoundTest() throws Exception {
+		
+		BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+		
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.get(BOOK_API.concat("/"+1))
+				.accept(MediaType.APPLICATION_JSON);
+		
+		mvc.perform(request)
+		.andExpect(status().isNotFound());
+	}
+	
+	@Test
+	@DisplayName("Deve deletar um livro")
+	public void mustDeleteABook() throws Exception {
+		Book book = new Book(1l,"Meu livro","Autor","123456");
+		BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.of(book));
+
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.delete(BOOK_API.concat("/"+1))
+				.accept(MediaType.APPLICATION_JSON);
+
+		mvc.perform(request)
+		.andExpect(status().isNoContent());
+	}
+	
+	@Test
+	@DisplayName("Deve retornar NOT FOUND ao deletar um livro")
+	public void mustReturnNotFoundWhenDeleteABook() throws Exception {
+		BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.delete(BOOK_API.concat("/"+1))
+				.accept(MediaType.APPLICATION_JSON);
+
+		mvc.perform(request)
+		.andExpect(status().isNotFound());
+	}
 
 	private BookDTO createBook() {
-		return new BookDTO((long)1,"Meu livro","Autor","123456");
+		return new BookDTO(1l,"Meu livro","Autor","123456");
 	}
 	
 }
