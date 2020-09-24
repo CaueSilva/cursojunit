@@ -47,7 +47,7 @@ public class BookResourceTest {
 	@DisplayName("Deve criar um livro com sucesso")
 	public void createBookTest() throws Exception {
 		
-		BookDTO dto = createBook();
+		BookDTO dto = createBookDTO();
 		Book savedBook = new Book((long)1,"Meu livro","Autor","123456");
 		
 		BDDMockito.given(service.save(Mockito.any(Book.class))).willReturn(savedBook);
@@ -85,7 +85,7 @@ public class BookResourceTest {
 	@Test
 	@DisplayName("Deve dar erro ao tentar inserir livro com ISBN duplicado")
 	public void createBookWithDuplicatedIsbn() throws Exception {
-		BookDTO dto = createBook();
+		BookDTO dto = createBookDTO();
 		String json = new ObjectMapper().writeValueAsString(dto),
 				mensagem = "ISBN já existente!";
 		
@@ -163,8 +163,50 @@ public class BookResourceTest {
 		mvc.perform(request)
 		.andExpect(status().isNotFound());
 	}
+	
+	@Test
+	@DisplayName("Deve atualizar livro")
+	public void mustUpdateBook() throws Exception {
+		Long id = 1l;
+		String json = new ObjectMapper().writeValueAsString(createBookDTO());
+		
+		Book updatingBook = new Book(id,"Meu livro","Autor","123456");
+		Book updatedBook = new Book(id, "Algum título", "Algum autor", "123456");
+		
+		BDDMockito.given(service.getById(id)).willReturn(Optional.of(updatingBook));
+		BDDMockito.given(service.update(updatingBook)).willReturn(updatedBook);
 
-	private BookDTO createBook() {
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.put(BOOK_API.concat("/"+1))
+				.content(json)
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON);
+
+		mvc.perform(request)
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("id").value(updatedBook.getId()))
+		.andExpect(jsonPath("title").value("Algum título"))
+		.andExpect(jsonPath("author").value("Algum autor"))
+		.andExpect(jsonPath("isbn").value(updatedBook.getIsbn()));
+	}
+	
+	@Test
+	@DisplayName("Deve dar NOT FOUND ao atualizar livro inexistente")
+	public void mustUpdateInexistentBook() throws Exception {
+		String json = new ObjectMapper().writeValueAsString(createBookDTO());
+		BDDMockito.given(service.getById(Mockito.anyLong())).willReturn(Optional.empty());
+
+		MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+				.put(BOOK_API.concat("/"+1))
+				.content(json)
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON);
+
+		mvc.perform(request)
+		.andExpect(status().isNotFound());
+	}
+
+	private BookDTO createBookDTO() {
 		return new BookDTO(1l,"Meu livro","Autor","123456");
 	}
 	
