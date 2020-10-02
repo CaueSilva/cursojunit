@@ -25,22 +25,28 @@ public class BookServiceImpl implements BookService {
 		if(repo.existsByIsbn(book.getIsbn())) {
 			throw new BusinessException("ISBN já existente!");
 		}
-		return repo.save(book);
+		return this.repo.save(book);
 	}
 
 	@Override
 	public Optional<Book> getById(Long id) {
-		return Optional.empty();
+		return this.repo.findById(id);
 	}
 	
 	@Override
 	public void delete(Book book) {
-		repo.delete(book);
+		if(book == null || book.getId() == null) {
+			throw new IllegalArgumentException("Book ID can't be null.");
+		}
+		this.repo.delete(book);
 	}
 	
 	@Override
 	public Book update(Book book) {
-		return null;
+		if(book == null || book.getId() == null) {
+			throw new IllegalArgumentException("Book ID can't be null.");
+		}
+		return this.repo.save(book);
 	}
 
 
